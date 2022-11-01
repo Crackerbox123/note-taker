@@ -1,9 +1,13 @@
-const express = require('express');// require JSON file
+const express = require('express');
+const notes = require('./db/db.json'); 
 
 const PORT = process.env.PORT || 3001;
 const path = require('path'); 
 const fs = require('fs'); 
+const { v4: uuidv4 } = require('uuid'); 
+const e = require('express');
 const app = express(); 
+
 
 app.use(express.static('public'));
 
@@ -12,10 +16,29 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json()); 
 
 
-const addNewNote = (body, notesArr) => {
-  console.log(body, "body in NEW NOTE FUNC");
-  console.log(notesArr, "DB / notes array");
-}
+const addNewNote = newNote => {
+  console.log(newNote, "body crossed over to NEW NOTE FUNC");
+
+  
+  fs.readFile('./db/db.json', 'utf8', (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      const parsedNotesArr = JSON.parse(data);
+
+      
+      parsedNotesArr.push(newNote);
+
+      
+      fs.writeFileSync(
+        path.join(__dirname, './db/db.json'),
+        JSON.stringify(parsedNotesArr, null, 2)
+      );
+      return parsedNotesArr;
+    }
+  });
+};
 
 
 
@@ -34,20 +57,19 @@ app.get('*', (req, res) => {
 });
 
 
+
 app.post('/api/notes', (req, res) => {
   const { title, text } = req.body;
-  console.log({ title }, "logged destructured title in POST method");
   
   const newNote = {
     title,
     text,
     
-    id: "123456789"
+    id: uuidv4()
   }
   
-  const returnedNote = addNewNote(newNote, notes);
-  
  
+  const returnedNote = addNewNote(newNote);
   res.json(returnedNote);
 })
 
